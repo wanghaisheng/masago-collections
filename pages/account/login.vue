@@ -1,0 +1,64 @@
+<template>
+  <AuthCard is-login>
+    <form class="space-y-6" @submit="onSubmit">
+      <div class="grid w-full items-center gap-4">
+        <FormInput
+          name="email"
+          label="Email"
+          placeholder="Enter your email here"
+          type="email"
+        ></FormInput>
+        <FormInput
+          name="password"
+          label="Password"
+          placeholder="Enter your password here"
+          type="password"
+        ></FormInput>
+      </div>
+      <span v-if="errorMsg" class="text-sm text-red-500">{{ errorMsg }}</span>
+      <Button class="w-full" type="submit">Login</Button>
+    </form>
+  </AuthCard>
+</template>
+
+<script lang="ts" setup>
+import { useForm } from 'vee-validate'
+import AuthCard from '~/components/account/AuthCard.vue'
+import FormInput from '~/components/account/FormInput.vue'
+
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
+const errorMsg = ref('')
+const { loginSchema } = validators()
+
+const { handleSubmit } = useForm({
+  validationSchema: loginSchema,
+  validateOnMount: false,
+})
+
+const onSubmit = handleSubmit(async (values) => {
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    })
+    if (error) {
+      throw createError({
+        name: 'Login failed',
+        message: error.message,
+      })
+    }
+  } catch (error) {
+    errorMsg.value = error.message
+    console.log(error)
+  }
+})
+
+watchEffect(() => {
+  if (user.value) {
+    navigateTo('/')
+  }
+})
+</script>
+
+<style></style>
